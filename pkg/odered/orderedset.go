@@ -1,5 +1,6 @@
 // Original source code - https://github.com/wk8/go-ordered-map
-// - change to use generics
+// Changes
+// - use generics
 // - add Keys(), Values() functions
 // edited by @ironpark 2022.02.02
 
