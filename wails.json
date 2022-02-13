@@ -1,0 +1,21 @@
+{
+  "name": "dovey",
+  "assetdir": "frontend/dist",
+  "frontend:build": "npm run build",
+  "frontend:install": "npm install",
+  "frontend:dev": "",
+  "wailsjsdir": "frontend/src",
+  "version": "2",
+  "Path": "",
+  "BuildDir": "",
+  "outputfilename": "dovey",
+  "OutputType": "",
+  "Platform": "",
+  "Author": {
+    "name": "ironpark",
+    "email": "cjfdhksaos@gmail.com"
+  },
+  "debounceMS": 100,
+  "devserverurl": "http://localhost:34115",
+  "appargs": ""
+}

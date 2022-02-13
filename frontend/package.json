@@ -1,0 +1,22 @@
+{
+  "name": "dovey",
+  "version": "0.0.0",
+  "author": "ironpark",
+  "type": "module",
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^1.0.0-next.30",
+    "svelte": "^3.44.0",
+    "vite": "^2.7.2"
+  },
+  "dependencies": {
+    "date-fns": "^2.28.0",
+    "svelte-infinite-loading": "^1.3.8",
+    "svelte-tiny-virtual-list": "^1.1.7",
+    "svelte-virtual-scroll-list": "^1.0.8"
+  }
+}
