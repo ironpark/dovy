@@ -1,10 +1,18 @@
 package twitch
 
-import odered "dovey/pkg/odered"
+import (
+	"dovey/dovy/twitch/badge"
+	"dovey/dovy/twitch/emote"
+	odered "dovey/pkg/odered"
+	"sync"
+)
 
 type Channel struct {
-	streamer  string
-	channelId string
-	viewers   int
-	users     odered.OrderedSet[string]
+	sync.RWMutex
+	streamer   string
+	channelId  string
+	viewers    int
+	users      *odered.OrderedSet[string]
+	emoteStore *emote.Store
+	badgeStore *badge.Store
 }

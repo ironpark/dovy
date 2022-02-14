@@ -29,8 +29,7 @@ func (a *App) OpenAuthorization() {
 
 // startup is called at application startup
 func (a *App) startup(ctx context.Context) {
-	dovey := dovy.NewDovey(ctx)
-	go dovey.Serve()
+	dovey, _ := dovy.NewDovey(ctx)
 	a.dovey = dovey
 	a.ctx = ctx
 }

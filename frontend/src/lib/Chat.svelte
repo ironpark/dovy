@@ -60,9 +60,9 @@
                     {/each}
                 {/if}
                 <span class="name" style="color: {data.color};">
-                        {data.display_name.toLowerCase() !== data.user_name ? data.display_name + '(' + data.user_name + ')' : data.display_name}
+                        {data.is_user_name_only ? data.display_name : data.display_name + '(' + data.user_name + ')'}
                 </span>
-                {@html data.msg}
+                {@html data.msg_with_emotes}
             </div>
         </div>
     </VirtualScroll>

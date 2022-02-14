@@ -1,4 +1,4 @@
-package chat
+package emote
 
 import (
 	"encoding/json"
@@ -13,7 +13,6 @@ type EmoteBTTV struct {
 	UserID    string `json:"userId"`
 }
 
-//https://api.betterttv.net/3/cached/users/twitch/121059319
 func GetGlobalEmotes() (emotes []EmoteBTTV, err error) {
 	res, err := http.Get("https://api.betterttv.net/3/cached/emotes/global")
 	if err != nil {
@@ -31,7 +30,6 @@ func GetChannelEmotesBTTV(channelId string) (emotes []EmoteBTTV, err error) {
 	}
 	err = json.NewDecoder(res.Body).Decode(&emotes)
 	res.Body.Close()
-
 	return
 }
 
@@ -42,6 +40,5 @@ func GetChannelEmotesFFZ(channelId string) (emotes []EmoteBTTV, err error) {
 	}
 	err = json.NewDecoder(res.Body).Decode(&emotes)
 	res.Body.Close()
-
 	return
 }

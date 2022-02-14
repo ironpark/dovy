@@ -84,7 +84,7 @@ func (om *OrderedMap[K, V]) Set(key K, value V) (V, bool) {
 
 // Delete removes the key-value pair, and returns what `Get` would have returned
 // on that key prior to the call to `Delete`.
-func (om *OrderedMap[K, V]) Delete(key K) (V, bool) {
+func (om *OrderedMap[K, V]) Delete(key K) (value V, ok bool) {
 	om.lock.Lock()
 	defer om.lock.Unlock()
 	if pair, present := om.pairs[key]; present {
@@ -92,7 +92,7 @@ func (om *OrderedMap[K, V]) Delete(key K) (V, bool) {
 		delete(om.pairs, key)
 		return pair.Value, true
 	}
-	return nil, false
+	return value, false
 }
 
 // Len returns the length of the ordered map.
@@ -105,19 +105,19 @@ func (om *OrderedMap[K, V]) Len() int {
 // Oldest returns a pointer to the oldest pair. It's meant to be used to iterate on the ordered map's
 // pairs from the oldest to the newest, e.g.:
 // for pair := orderedMap.Oldest(); pair != nil; pair = pair.Next() { fmt.Printf("%v => %v\n", pair.Key, pair.Value) }
-func (om *OrderedMap[K, V]) Oldest() *Pair {
+func (om *OrderedMap[K, V]) Oldest() *Pair[K, V] {
 	om.lock.RLock()
 	defer om.lock.RUnlock()
-	return listElementToPair(om.list.Front())
+	return listElementToPair[K, V](om.list.Front())
 }
 
 // Newest returns a pointer to the newest pair. It's meant to be used to iterate on the ordered map's
 // pairs from the newest to the oldest, e.g.:
 // for pair := orderedMap.Oldest(); pair != nil; pair = pair.Next() { fmt.Printf("%v => %v\n", pair.Key, pair.Value) }
-func (om *OrderedMap[K, V]) Newest() *Pair {
+func (om *OrderedMap[K, V]) Newest() *Pair[K, V] {
 	om.lock.RLock()
 	defer om.lock.RUnlock()
-	return listElementToPair(om.list.Back())
+	return listElementToPair[K, V](om.list.Back())
 }
 
 func (om *OrderedMap[K, V]) Keys() (keys []K) {
@@ -145,18 +145,18 @@ func (om *OrderedMap[K, V]) Values() (keys []K) {
 }
 
 // Next returns a pointer to the next pair.
-func (p *Pair) Next() *Pair {
-	return listElementToPair(p.element.Next())
+func (p *Pair[K, V]) Next() *Pair[K, V] {
+	return listElementToPair[K, V](p.element.Next())
 }
 
 // Previous returns a pointer to the previous pair.
-func (p *Pair) Prev() *Pair {
-	return listElementToPair(p.element.Prev())
+func (p *Pair[K, V]) Prev() *Pair[K, V] {
+	return listElementToPair[K, V](p.element.Prev())
 }
 
-func listElementToPair(element *list.Element) *Pair {
+func listElementToPair[K KeyAble, V any](element *list.Element) *Pair[K, V] {
 	if element == nil {
 		return nil
 	}
-	return element.Value.(*Pair)
+	return element.Value.(*Pair[K, V])
 }

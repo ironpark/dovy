@@ -3,7 +3,6 @@ package dovy
 import (
 	"context"
 	"dovey/dovy/twitch"
-	"dovey/dovy/twitch/chat"
 	"fmt"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"os/exec"
@@ -14,17 +13,22 @@ import (
 const TwitchClientId = "xxt39lhzhqa7z2wwfdzjkdrtq4cj21"
 
 type Dovy struct {
-	appCtx      context.Context
-	accessToken string
-	scope       []string
-	cm          *chat.ChatManager
-	lock        sync.Mutex
+	appCtx        context.Context
+	accessToken   string
+	scope         []string
+	lock          sync.Mutex
+	tokenReceiver *twitch.TokenReceiver
+	cm            *twitch.ConnectionManager
 }
 
-func NewDovey(ctx context.Context) *Dovy {
-	cm := chat.NewChatManager(TwitchClientId)
+func NewDovey(ctx context.Context) (*Dovy, error) {
+	cm, err := twitch.NewConnectionManager()
+	if err != nil {
+		return nil, err
+	}
 	dovy := &Dovy{
-		appCtx: ctx,
+		appCtx:      ctx,
+		accessToken: "",
 		scope: []string{
 			"channel:moderate",
 			"chat:edit",
@@ -39,12 +43,20 @@ func NewDovey(ctx context.Context) *Dovy {
 			"moderator:manage:banned_users",
 			"moderator:read:blocked_terms",
 		},
-		cm: cm,
+		lock:          sync.Mutex{},
+		tokenReceiver: twitch.NewTokenReceiver(),
+		cm:            cm,
 	}
-	cm.OnMsg(func(message chat.Message) {
-		runtime.EventsEmit(dovy.appCtx, "chat.stream", message)
+
+	dovy.tokenReceiver.SetTokenRecvCallback(func(token string) {
+		cm.Initialize(token)
+		cm.ConnectOrGet("woowakgood")
 	})
-	return dovy
+	cm.OnMessage(func(message twitch.Message) {
+		runtime.EventsEmit(ctx, "chat.stream", message)
+	})
+	go dovy.tokenReceiver.Serve()
+	return dovy, nil
 }
 
 func (dov Dovy) OpenAuthorization() {
@@ -56,6 +68,10 @@ func (dov Dovy) OpenAuthorization() {
 	case "windows":
 		exec.Command("start", "/max", authUrl).Run()
 	}
+}
+
+func (dov *Dovy) Connect(channelName string) {
+	dov.cm.ConnectOrGet(channelName)
 }
 
 func (dov *Dovy) SendChatMessage(msg string) {

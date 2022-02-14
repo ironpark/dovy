@@ -76,6 +76,10 @@ func (tr *TokenReceiver) token(w http.ResponseWriter, req *http.Request) {
 	tr.callback(accessToken)
 }
 
+func (tr *TokenReceiver) Serve() error {
+	return tr.server.ListenAndServe()
+}
+
 func GetAuthorizationURL(scope []string, forceVerify bool) string {
 	letterRunes := []rune("abcdefghijklmnopqrstuvwxyz")
 	randomRunes := make([]rune, 15)

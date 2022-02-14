@@ -32,10 +32,10 @@ func (om *OrderedSet[V]) Delete(key V) bool {
 	return ok
 }
 
-func (om *OrderedSet[K, V]) Len() int {
+func (om *OrderedSet[V]) Len() int {
 	return om.set.Len()
 }
 
-func (om *OrderedSet[K, V]) Values() (keys []K) {
+func (om *OrderedSet[V]) Values() (keys []V) {
 	return om.set.Keys()
 }
