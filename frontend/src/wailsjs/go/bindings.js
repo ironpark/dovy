@@ -5,12 +5,27 @@ const go = {
   "main": {
     "App": {
       /**
+       * Connect
+       * @param {string} arg1 - Go Type: string
+       * @returns {Promise<void>} 
+       */
+      "Connect": (arg1) => {
+        return window.go.main.App.Connect(arg1);
+      },
+      /**
        * Greet
        * @param {string} arg1 - Go Type: string
        * @returns {Promise<string>}  - Go Type: string
        */
       "Greet": (arg1) => {
         return window.go.main.App.Greet(arg1);
+      },
+      /**
+       * IsAuthorized
+       * @returns {Promise<boolean>}  - Go Type: bool
+       */
+      "IsAuthorized": () => {
+        return window.go.main.App.IsAuthorized();
       },
       /**
        * OpenAuthorization

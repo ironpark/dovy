@@ -14,8 +14,9 @@ type App struct {
 
 // NewApp creates a new App application struct
 func NewApp() *App {
+	do, _ := dovy.NewDovey()
 	return &App{
-		dovey: nil,
+		dovey: do,
 	}
 }
 
@@ -27,10 +28,18 @@ func (a *App) OpenAuthorization() {
 	a.dovey.OpenAuthorization()
 }
 
+func (a *App) Connect(channelName string) {
+	a.dovey.Connect(channelName)
+	return
+}
+
+func (a *App) IsAuthorized() bool {
+	return a.dovey.IsAuthorized()
+}
+
 // startup is called at application startup
 func (a *App) startup(ctx context.Context) {
-	dovey, _ := dovy.NewDovey(ctx)
-	a.dovey = dovey
+	a.dovey.SetAppContext(ctx)
 	a.ctx = ctx
 }
 

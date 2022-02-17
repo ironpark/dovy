@@ -22,7 +22,9 @@
         }
         if (!scrolling) virtualList.scrollToBottom();
     }
-
+    export function scrollToBottom() {
+        virtualList.scrollToBottom();
+    }
     function handleScrollEvent({detail: {event, offset}}) {
         let element = event.target;
         let isBottom = Math.abs(element.scrollHeight - element.scrollTop - element.clientHeight) < 100
@@ -75,7 +77,6 @@
 <style>
     :global(.virtual-list-wrapper) {
         margin: 20px;
-        background: #fff;
         border-radius: 2px;
         box-shadow: 0 2px 2px 0 rgba(0, 0, 0, .14), 0 3px 1px -2px rgba(0, 0, 0, .2), 0 1px 5px 0 rgba(0, 0, 0, .12);
         background: #fafafa;
@@ -110,7 +111,6 @@
         margin-right: 5px;
         white-space: nowrap;
     }
-
 
     .message-row .name {
         display: inline;

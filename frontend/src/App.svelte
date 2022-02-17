@@ -7,18 +7,35 @@
     import Modal from "./lib/Modal.svelte";
 
     let showModal = false;
+    let showLoginModal = false;
+
     let chatBox1;
     let chatBox2;
     let index = 0;
     let b = false;
-    let tabs = ["#asmongold", "#vo_ine"];
+    let tabs = [];
+    let tabData = {}
+    let selectedData = [];
     let selectedIndex = 0;
 
     let channelName = ""
-    onMount(() => {
+
+    onMount(async () => {
+        showLoginModal = !await window.go.main.App.IsAuthorized()
         window.runtime.EventsOn("chat.stream", (data) => {
             data.time = Date.parse(data.time)
-            chatBox1.add(data)
+            if (tabData[data.channel] === undefined) {
+                tabData[data.channel] = [];
+                tabs = [...tabs, data.channel];
+                selectedIndex = tabs.length - 1;
+            }
+            tabData[data.channel][tabData[data.channel].length] = data
+            if (tabData[data.channel].length > 100) {
+                tabData[data.channel] = [...tabData[data.channel].slice(tabData[data.channel].length - 1 - 80, tabData[data.channel].length - 1)]
+            }
+            if (tabs[selectedIndex] === data.channel) {
+                chatBox1.scrollToBottom();
+            }
         })
     })
 
@@ -32,6 +49,8 @@
     <Tabs bind:selectedIndex={selectedIndex} bind:tabs={tabs} on:addclick={()=>{
         showModal = true
         console.log("?")
+    }} on:select={(i)=>{
+                    chatBox1.scrollToBottom();
     }}>
         <div slot="front">
             <div class="buttons">
@@ -49,11 +68,7 @@
     </Tabs>
     <div class="contents">
         <div style="display: flex">
-            <Chat style="flex:1" bind:this={chatBox1}/>
-            <Chat style="flex:1" bind:this={chatBox2} showTime={false}/>
-            <div>
-                시청자
-            </div>
+            <Chat style="flex:1" bind:this={chatBox1} bind:itemList={ tabData[tabs[selectedIndex]]}/>
         </div>
     </div>
     <button class="button" on:click={greet}>인증</button>
@@ -65,14 +80,29 @@
     </div>
     <input type="text" placeholder="스트리머 아이디" bind:value={channelName}/>
     <button on:click={()=>{
-            console.log("!!",channelName)
-            tabs = [...tabs,"#"+channelName]
-            channelName = ""
-            showModal = false
+            if(channelName === "") return;
+            channelName = channelName.trim()
+            tabs = [...tabs,channelName];
+            window.go.main.App.Connect(channelName);
+            tabData[channelName] = [];
+            channelName = "";
+            showModal = false;
             selectedIndex = tabs.length - 1;
+            chatBox1.scrollToBottom();
         }}>추가
     </button>
     <button>취소</button>
+</Modal>
+
+<Modal bind:showModal={showLoginModal}>
+    <div slot="title">
+        <h3>로그인</h3>
+    </div>
+    <button on:click={()=>{
+            window.go.main.App.OpenAuthorization()
+            showLoginModal = false
+        }}>트위치 로그인
+    </button>
 </Modal>
 
 <style>
@@ -90,6 +120,7 @@
     :global(input::-moz-focus-inner), :global(input::-moz-focus-outer) {
         border: 0;
     }
+
     /* window BEGIN */
 
     span {
@@ -119,19 +150,23 @@
         height: 13px;
         margin: 2px;
     }
-    .buttons button svg{
+
+    .buttons button svg {
         position: absolute;
         left: 0;
         top: 0;
     }
+
     .close {
         background: #ff5c5c;
         border: 1px solid #e33e41;
     }
+
     .close:active {
         background: #c14645;
         border: 1px solid #b03537;
     }
+
     .close:active .closebutton {
         color: #4e0002;
     }

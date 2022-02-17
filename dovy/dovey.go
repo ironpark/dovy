@@ -21,13 +21,14 @@ type Dovy struct {
 	cm            *twitch.ConnectionManager
 }
 
-func NewDovey(ctx context.Context) (*Dovy, error) {
+func NewDovey() (*Dovy, error) {
 	cm, err := twitch.NewConnectionManager()
 	if err != nil {
 		return nil, err
 	}
+
 	dovy := &Dovy{
-		appCtx:      ctx,
+		appCtx:      nil,
 		accessToken: "",
 		scope: []string{
 			"channel:moderate",
@@ -50,13 +51,27 @@ func NewDovey(ctx context.Context) (*Dovy, error) {
 
 	dovy.tokenReceiver.SetTokenRecvCallback(func(token string) {
 		cm.Initialize(token)
-		cm.ConnectOrGet("woowakgood")
 	})
-	cm.OnMessage(func(message twitch.Message) {
-		runtime.EventsEmit(ctx, "chat.stream", message)
-	})
+
 	go dovy.tokenReceiver.Serve()
 	return dovy, nil
+}
+
+func (dov *Dovy) SetAppContext(ctx context.Context) {
+	dov.lock.Lock()
+	defer dov.lock.Unlock()
+	if dov.appCtx != nil {
+		return
+	}
+	dov.appCtx = ctx
+	dov.cm.OnMessage(func(message twitch.Message) {
+		runtime.EventsEmit(ctx, "chat.stream", message)
+	})
+	return
+}
+
+func (dov *Dovy) IsAuthorized() bool {
+	return dov.cm.IsInitialized()
 }
 
 func (dov Dovy) OpenAuthorization() {

@@ -222,3 +222,10 @@ func (cm *ConnectionManager) ConnectOrGet(channelName string) (*Channel, error) 
 	cm.irc.Join(channelName)
 	return channel, nil
 }
+
+func (cm *ConnectionManager) IsInitialized() bool {
+	fmt.Println("IsInitialized")
+	cm.lock.RLock()
+	cm.lock.RUnlock()
+	return cm.token != ""
+}
