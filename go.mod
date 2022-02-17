@@ -7,7 +7,7 @@ require (
 	github.com/gempir/go-twitch-irc/v3 v3.0.0-beta.2
 	github.com/gorilla/websocket v1.4.1
 	github.com/nicklaw5/helix/v2 v2.3.0
-	github.com/wailsapp/wails/v2 v2.0.0-beta.29
+	github.com/wailsapp/wails/v2 v2.0.0-beta.30
 )
 
 require (
@@ -34,11 +34,11 @@ require (
 	github.com/klauspost/compress v1.12.3 // indirect
 	github.com/leaanthony/go-ansi-parser v1.0.1 // indirect
 	github.com/leaanthony/go-common-file-dialog v1.0.3 // indirect
-	github.com/leaanthony/go-webview2 v1.0.2 // indirect
+	github.com/leaanthony/go-webview2 v1.0.3-0.20220125181555-00f20a61c17d // indirect
 	github.com/leaanthony/gosod v1.0.3 // indirect
 	github.com/leaanthony/slicer v1.5.0 // indirect
 	github.com/leaanthony/typescriptify-golang-structs v0.1.7 // indirect
-	github.com/leaanthony/winc v0.0.0-20220117090042-fdd739b32c58 // indirect
+	github.com/leaanthony/winc v0.0.0-20220202120322-32d63aaf77de // indirect
 	github.com/pkg/browser v0.0.0-20210706143420-7d21f8c997e2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/savsgio/gotils v0.0.0-20200117113501-90175b0fbe3f // indirect
