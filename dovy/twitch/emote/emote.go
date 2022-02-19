@@ -39,6 +39,6 @@ func (cm *Store) GetEmote(code string) Emote {
 	return cm.emotes[code]
 }
 
-func ImgTag(src string) string {
-	return fmt.Sprintf("<img src=\"%s\" class=\"emote\"/>", src)
+func ImgTag(src, code string) string {
+	return fmt.Sprintf("<img src=\"%s\" class=\"emote\" alt=\"%s\"/>", src, code)
 }

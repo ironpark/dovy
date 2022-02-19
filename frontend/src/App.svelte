@@ -5,27 +5,33 @@
     import {faEllipsisVertical, faGear, faGears, faXmark, faPlus, faMinus} from '@fortawesome/free-solid-svg-icons'
     import Tabs from "./lib/Tabs.svelte";
     import Modal from "./lib/Modal.svelte";
+    import ContextMenu from "./lib/ContextMenu.svelte";
 
     let showModal = false;
     let showLoginModal = false;
-
+    let ctxMenu;
+    let chatCtxMenu;
     let chatBox1;
     let chatBox2;
     let index = 0;
     let b = false;
     let selectedData = [];
     let selectedIndex = 0;
+    let selectedMessage = ""
     let chatMessage = ""
     let channelName = ""
     let channels = {};
+    let selectedUser = "";
     let selectedChannel = {
         filter: {},
         name: '',
         itemList: [],
         users: {},
     }
+
     let tabs = [];
     let tabData = {};
+
     onMount(async () => {
         showLoginModal = !await window.go.main.App.IsAuthorized()
         window.runtime.EventsOn("stream.chat", async (data) => {
@@ -62,7 +68,6 @@
                 }
                 delete channel.users[data.user];
             }
-            console.log(data.channel, data.event, data.user)
         })
     })
 
@@ -137,7 +142,33 @@
     </button>
 </Modal>
 
-<main>
+<ContextMenu bind:this={ctxMenu} menus={["맨션하기","아이디 복사하기","임시차단","강퇴"]}>
+    <div style="font-size: 13px;padding: 5px;border-bottom: solid 1px #a2a2a2"> @{selectedUser} </div>
+</ContextMenu>
+
+<ContextMenu bind:this={chatCtxMenu} menus={["답변하기","맨션하기","내용 복사","아이디 복사","임시차단","강퇴"]}>
+    <div style="font-weight: bold;font-size: 13px;min-width: 100px">@{selectedUser}</div>
+    <div style="font-size: 12px;padding: 3px;">
+        {@html selectedMessage}
+    </div>
+    <div style="display: flex;flex-flow: row;margin: 0;padding: 0;font-size: 13px;" class="menu-item">
+        <div class="menu-item" style="width: 30px;text-align: center">답변</div>
+        <div class="menu-item" style="width: 30px;text-align: center">맨션</div>
+        <div class="menu-item" style="width: 80px;text-align: center">내용 복사</div>
+        <div class="menu-item" style="width: 90px;;text-align: center">아이디 복사</div>
+    </div>
+    <div style="display: flex;flex-flow: column;margin: 0;padding: 0;font-size: 13px;">
+        <div class="menu-item">임시차단</div>
+        <div class="menu-item">강퇴</div>
+    </div>
+
+</ContextMenu>
+
+<main on:click={(e)=>{
+     ctxMenu.Close()
+     chatCtxMenu.Close()
+}}>
+
     <Tabs bind:selectedIndex={selectedIndex} bind:tabs={tabs} on:addclick={()=>{showModal = true}}
           on:selectTab={(e)=>{
               selectedChannel = channels[tabs[e.detail.index]]
@@ -160,10 +191,18 @@
     </Tabs>
 
     <div style="display: flex;height:calc(100vh - 70px);flex-flow: row">
-        <Chat style="flex:1;height: 100%;" bind:this={chatBox1} bind:itemList={ selectedChannel.itemList }/>
+        <Chat style="flex:1;height: 100%;" bind:this={chatBox1} bind:itemList={ selectedChannel.itemList }
+              callCtxMenu={(e)=>{
+                  selectedUser = e.user;
+                  selectedMessage = e.message;
+                  chatCtxMenu.Open('right',e);
+              }}/>
         <div class="user-list">
-            {#each Object.keys(selectedChannel.users) as user}
-                <div>{user}</div>
+            {#each Object.keys(selectedChannel.users) as user (user)}
+                <div on:contextmenu={(e)=>{
+                    selectedUser = user
+                    ctxMenu.Open('left',e)
+                }}>{user}</div>
             {/each}
         </div>
     </div>
@@ -177,24 +216,48 @@
 </main>
 
 <style>
+
     main {
         width: 100%;
         height: 100%;
         display: flex;
         flex-direction: column;
+        overscroll-behavior: none;
+    }
+
+    :global(::-webkit-scrollbar) {
+        width: 5px;
+    }
+
+    :global(::-webkit-scrollbar-thumb) {
+        background-color: grey;
+        border: solid 1px transparent;
+        border-radius: 3px;
+        margin: 1px;
+    }
+
+    :global(::-webkit-scrollbar-track) {
+        width: 7px;
+        background-color: transparent;
     }
 
     :global(html,body) {
+        overscroll-behavior: none;
         margin: 0;
         height: 100%;
+        touch-action: none;
+        background-attachment: fixed;
     }
 
     :global(#app) {
+        overscroll-behavior: none;
         height: 100%;
         display: flex;
     }
 
+
     .contents {
+        overscroll-behavior: none;
         display: flex;
         flex-direction: column;
         width: 100%;
@@ -205,24 +268,39 @@
         padding: 5px;
         border: solid 1px #c0c0c0;
         border-radius: 3px;
-        transition: border 100ms ease-in,background-color 100ms ease-in;
+        transition: border 100ms ease-in, background-color 100ms ease-in;
         background: #d0d0d0;
     }
-    .chat-input::placeholder{
+
+    .chat-input::placeholder {
         color: #494949;
     }
-    .chat-input:focus::placeholder{
+
+    .chat-input:focus::placeholder {
         color: #696969;
     }
-    .chat-input:focus{
+    .menu-item .menu-item {
+        border-right: solid 1px silver;
+        border-top:0;
+    }
+
+    .menu-item:last-child{
+        border-right: 0;
+    }
+
+    .menu-item{
+        border-top: solid 1px silver;
+        padding: 3px;
+    }
+
+    .chat-input:focus {
         outline: none;
         border: solid 1px #772ce8;
         background: transparent;
     }
-
     @import url(https://fonts.googleapis.com/earlyaccess/notosanskr.css);
-    body, talbe, th, td, div, dl, dt, dd, ul, ol, li, h1, h2, h3, h4, h5, h6,
-    pre, form, fieldset, textarea, blockquote, span, * {
+    :global(body, talbe, th, td, div, dl, dt, dd, ul, ol, li, h1, h2, h3, h4, h5, h6,
+    pre, form, fieldset, textarea, blockquote, span, *) {
         font-family: 'Noto Sans KR', sans-serif;
     }
 
@@ -234,8 +312,19 @@
         width: 130px;
         overflow-y: scroll;
         font-size: 13px;
-        padding-left: 5px;
         border-left: solid 1px #999999;
+        overflow-x: hidden;
+    }
+
+    .user-list div {
+        -webkit-user-select: none;
+        padding-top: 2px;
+        padding-bottom: 2px;
+        padding-left: 5px;
+    }
+
+    .user-list div:hover {
+        background-color: #e3e3e3;
     }
 
     /* window BEGIN */
@@ -300,4 +389,18 @@
     }
 
 
+    .custom-context-menu ul {
+        list-style: none;
+        padding: 0;
+        background-color: transparent;
+    }
+
+    .custom-context-menu li {
+        padding: 3px 5px;
+        cursor: pointer;
+    }
+
+    .custom-context-menu li:hover {
+        background-color: #f0f0f0;
+    }
 </style>

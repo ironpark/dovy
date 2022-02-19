@@ -66,7 +66,6 @@ func (om *OrderedMap[K, V]) GetPair(key K) *Pair[K, V] {
 func (om *OrderedMap[K, V]) Set(key K, value V) (V, bool) {
 	om.lock.Lock()
 	defer om.lock.Unlock()
-	fmt.Println("OrderedMap", key, value)
 	if pair, present := om.pairs[key]; present {
 		oldValue := pair.Value
 		pair.Value = value

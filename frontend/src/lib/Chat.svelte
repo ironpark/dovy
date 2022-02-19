@@ -8,6 +8,7 @@
     export let showEmotes = true;
     export let showTime = true;
     export let itemList = [];
+    export let callCtxMenu;
     let listElement;
     let virtualList;
     let scrolling = false;
@@ -17,7 +18,6 @@
 
     export function add(data) {
         if (itemList.length > 200) {
-            console.log("cut..")
             itemList = [...itemList.slice(itemList.length - 1 - 50, itemList.length - 1), data]
         } else {
             itemList[itemList.length] = data
@@ -27,11 +27,11 @@
     }
 
     export function scrollToBottom() {
-        listElement.scrollTo(0,listElement.scrollHeight);
+        listElement.scrollTo(0, listElement.scrollHeight);
     }
 
     afterUpdate(() => {
-        listElement.scrollTo(0,listElement.scrollHeight);
+        listElement.scrollTo(0, listElement.scrollHeight);
     });
 
     function handleScrollEvent({detail: {event, offset}}) {
@@ -47,13 +47,32 @@
 
 </script>
 
-<div class="list" style={style} bind:this={listElement}>
+<div class="list" style={style} bind:this={listElement} on:copy={(e)=>{
+  let selection = document.getSelection(),
+  range = selection.getRangeAt(0),
+  contents = range.cloneContents(),
+  copiedText = '';
+
+  for (let node of contents.childNodes.values()) {
+    if (node.nodeType === 3) {
+      // text node
+      copiedText += node.textContent;
+    } else if (node.nodeType === 1 && node.nodeName === 'IMG') {
+      copiedText += node.alt;
+    }
+  }
+  e.clipboardData.setData('text/plain', copiedText);
+  e.preventDefault();
+}}>
     {#each itemList as data (data.id)}
         <div class="message-row"
              style="display: flex;
                     justify-content: flex-start;
                     align-items: start;
-                    vertical-align: middle;">
+                    vertical-align: middle;" on:contextmenu={(e)=>{
+                        e.user=data.user_name;
+                        e.message = data.msg_with_emotes;
+                        callCtxMenu(e)}}>
             {#if showTime}
                 <div class="time">{format(data.time, "hh:mm:ss")} </div>
             {/if}
@@ -70,7 +89,7 @@
             </div>
         </div>
     {/each}
-<!--    <div bind:this={listElement}></div>-->
+    <!--    <div bind:this={listElement}></div>-->
     <!--    </VirtualScroll>-->
     {#if scrolling}
         <div class="chat-paused-footer">
@@ -79,9 +98,10 @@
     {/if}
 </div>
 <style>
-    .list{
+    .list {
         overflow-y: auto;
     }
+
     :global(.virtual-list-wrapper) {
         margin: 20px;
         border-radius: 2px;
@@ -97,6 +117,7 @@
         vertical-align: middle;
         height: 17px;
     }
+
     :global(.message-row .badge) {
         height: 17px;
     }
@@ -106,7 +127,20 @@
         font-size: 13px;
         overflow-wrap: anywhere;
         word-break: break-all;
-        margin: 5px 20px 5px 5px;
+        padding: 5px 20px 5px 5px;
+    }
+
+    .message-row .name:hover {
+        background: #d2d2d2;
+    }
+
+    .message-row:hover {
+        background: #e3e3e3;
+    }
+
+    .name {
+        padding: 2px;
+        cursor: pointer;
     }
 
     .message-row .badge {

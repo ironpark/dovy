@@ -73,35 +73,41 @@ func (cm *ConnectionManager) msgParse(id, channelName, message string, user twit
 	}
 	parserdMsg := message
 	parts := strings.Split(message, " ")
-	if len(emotes) > 0 {
-		for _, emo := range emotes {
-			for i, part := range parts {
+
+	for i, part := range parts {
+		founded := false
+		if len(emotes) > 0 {
+			for _, emo := range emotes {
 				if part == emo.Name {
 					imgUri := fmt.Sprintf("https://static-cdn.jtvnw.net/emoticons/v2/%s/default/light/1.0", emo.ID)
-					parts[i] = emote.ImgTag(imgUri)
+					parts[i] = emote.ImgTag(imgUri, emo.Name)
+					founded = true
+					break
 				}
 			}
 		}
-	}
-	for i, part := range parts {
-		founded := false
+		if founded {
+			continue
+		}
 		// TWITCH Emotes
 		for _, emo := range emotes {
 			if part == emo.Name {
 				founded = true
 				imgUri := fmt.Sprintf("https://static-cdn.jtvnw.net/emoticons/v2/%s/default/light/1.0", emo.ID)
-				parts[i] = emote.ImgTag(imgUri)
+				parts[i] = emote.ImgTag(imgUri, emo.Name)
 				break
 			}
 		}
 		if founded {
 			continue
 		}
+
 		// BTTV Global Emotes
 		if bttvEmote := cm.bttv.GetEmote(part); bttvEmote != nil {
 			parts[i] = bttvEmote.GetImgTag()
 			continue
 		}
+
 		// BTTV, FFZ Channel Emotes
 		if channelEmote := channel.Emotes.GetEmote(part); channelEmote != nil {
 			parts[i] = channelEmote.GetImgTag()
@@ -190,7 +196,6 @@ func (cm *ConnectionManager) Initialize(token string) error {
 			log.Println("ERR", err)
 			return
 		}
-		fmt.Println(iMsg.User, "JOIN")
 		if channel.AddUser(iMsg.User) {
 			cm.lock.RLock()
 			if cm.userEventCallback != nil {

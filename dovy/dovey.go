@@ -68,7 +68,6 @@ func (dov *Dovy) SetAppContext(ctx context.Context) {
 		runtime.EventsEmit(ctx, "stream.chat", message)
 	})
 	dov.cm.OnUserEvent(func(channel *twitch.Channel, event string, user string) {
-		fmt.Println(channel.ChannelId(), event, user)
 		runtime.EventsEmit(ctx, "stream.user-event", map[string]interface{}{
 			"channel": channel.StreamerId(),
 			"event":   event,
