@@ -167,7 +167,7 @@
             {/each}
         </div>
     </div>
-    <input style="" type="text" bind:value={chatMessage} on:keypress={(e)=>{
+    <input class="chat-input" type="text" placeholder="메시지 보내기" bind:value={chatMessage} on:keypress={(e)=>{
             if (e.charCode === 13 && (chatMessage && chatMessage.trim() !== ""))  {
                 window.go.main.App.SendChatMessage(selectedChannel.name,chatMessage)
                 chatMessage = ""
@@ -199,6 +199,25 @@
         flex-direction: column;
         width: 100%;
         overflow-y: auto;
+    }
+
+    .chat-input {
+        padding: 5px;
+        border: solid 1px #c0c0c0;
+        border-radius: 3px;
+        transition: border 100ms ease-in,background-color 100ms ease-in;
+        background: #d0d0d0;
+    }
+    .chat-input::placeholder{
+        color: #494949;
+    }
+    .chat-input:focus::placeholder{
+        color: #696969;
+    }
+    .chat-input:focus{
+        outline: none;
+        border: solid 1px #772ce8;
+        background: transparent;
     }
 
     @import url(https://fonts.googleapis.com/earlyaccess/notosanskr.css);
