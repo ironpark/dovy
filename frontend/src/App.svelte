@@ -13,45 +13,109 @@
     let chatBox2;
     let index = 0;
     let b = false;
-    let tabs = [];
-    let tabData = {}
     let selectedData = [];
     let selectedIndex = 0;
-
+    let chatMessage = ""
     let channelName = ""
-
+    let channels = {};
+    let selectedChannel = {
+        filter: {},
+        name: '',
+        itemList: []
+    }
+    let tabs = [];
+    let tabData = {};
     onMount(async () => {
         showLoginModal = !await window.go.main.App.IsAuthorized()
         window.runtime.EventsOn("chat.stream", (data) => {
             data.time = Date.parse(data.time)
-            if (tabData[data.channel] === undefined) {
-                tabData[data.channel] = [];
-                tabs = [...tabs, data.channel];
-                selectedIndex = tabs.length - 1;
+            let channel = channelInitIfNotExist(data.channel)
+            channel.itemList[channel.itemList.length] = data;
+
+            if (channel.itemList.length > 1000) {
+                channel.itemList = channel.itemList.slice(channel.itemList.length - 1 - 110, channel.itemList.length - 1)
             }
-            tabData[data.channel][tabData[data.channel].length] = data
-            if (tabData[data.channel].length > 100) {
-                tabData[data.channel] = [...tabData[data.channel].slice(tabData[data.channel].length - 1 - 80, tabData[data.channel].length - 1)]
-            }
-            if (tabs[selectedIndex] === data.channel) {
-                chatBox1.scrollToBottom();
+
+            if (selectedChannel.name === data.channel) {
+                selectedChannel = channel;
             }
         })
     })
+
+    function channelExist(channelName) {
+        return channels[channelName] !== undefined
+    }
+
+    function channelInitIfNotExist(channelName) {
+        if (channels[channelName] !== undefined) {
+            return channels[channelName];
+        }
+        let channel = {
+            filter: {},
+            name: channelName,
+            itemList: []
+        }
+        channels[channelName] = channel;
+
+        let tabItem = {
+            name: channelName,
+            views: [{
+                name: channelName,
+                filter: {},
+                channel: channel,
+            }]
+        }
+
+        tabs[tabs.length] = channelName;
+        tabData[channelName] = tabItem;
+        selectedIndex = tabs.length - 1;
+        selectedChannel = channel
+        return channel
+    }
 
     function greet() {
         window.go.main.App.OpenAuthorization()
     }
 
 </script>
+<Modal bind:showModal={showModal}>
+    <div slot="title">
+        <h3>채팅 채널 추가</h3>
+    </div>
+    <input type="text" placeholder="스트리머 아이디" bind:value={channelName}/>
+    <button on:click={()=>{
+            if(channelName === "") return;
+            if(channelExist(channelName))return;
+            channelName = channelName.trim()
+            channelInitIfNotExist(channelName);
+            window.go.main.App.Connect(channelName);
+            showModal = false;
+        }}> 추가
+    </button>
+    <button on:click={()=>{
+            showModal = false;
+            channelName = "";
+    }}>취소</button>
+</Modal>
+
+<Modal bind:showModal={showLoginModal}>
+    <div slot="title">
+        <h3>로그인</h3>
+    </div>
+    <button on:click={()=>{
+            window.go.main.App.OpenAuthorization()
+            showLoginModal = false
+        }}>트위치 로그인
+    </button>
+</Modal>
 
 <main>
-    <Tabs bind:selectedIndex={selectedIndex} bind:tabs={tabs} on:addclick={()=>{
-        showModal = true
-        console.log("?")
-    }} on:select={(i)=>{
-                    chatBox1.scrollToBottom();
-    }}>
+    <Tabs bind:selectedIndex={selectedIndex} bind:tabs={tabs} on:addclick={()=>{showModal = true}}
+          on:selectTab={(e)=>{
+              selectedChannel = channels[tabs[e.detail.index]]
+              selectedIndex = e.detail.index
+              chatBox1.scrollToBottom();
+          }}>
         <div slot="front">
             <div class="buttons">
                 <button class="close" on:click={()=>{window.runtime.Quit()}}>
@@ -66,49 +130,42 @@
             </div>
         </div>
     </Tabs>
-    <div class="contents">
-        <div style="display: flex">
-            <Chat style="flex:1" bind:this={chatBox1} bind:itemList={ tabData[tabs[selectedIndex]]}/>
-        </div>
+
+    <div style="display: flex;height:calc(100vh - 45px);flex-flow: column">
+        <Chat style="flex: 1" bind:this={chatBox1} bind:itemList={ selectedChannel.itemList }/>
+        <input style="" type="text" bind:value={chatMessage} on:keypress={(e)=>{
+            if (e.charCode === 13 && (chatMessage && chatMessage.trim() !== ""))  {
+                window.go.main.App.SendChatMessage(selectedChannel.name,chatMessage)
+                chatMessage = ""
+            }
+        }}>
     </div>
-    <button class="button" on:click={greet}>인증</button>
+
 </main>
 
-<Modal bind:showModal={showModal}>
-    <div slot="title">
-        <h3>채팅 채널 추가</h3>
-    </div>
-    <input type="text" placeholder="스트리머 아이디" bind:value={channelName}/>
-    <button on:click={()=>{
-            if(channelName === "") return;
-            channelName = channelName.trim()
-            tabs = [...tabs,channelName];
-            window.go.main.App.Connect(channelName);
-            tabData[channelName] = [];
-            channelName = "";
-            showModal = false;
-            selectedIndex = tabs.length - 1;
-            chatBox1.scrollToBottom();
-        }}>추가
-    </button>
-    <button>취소</button>
-</Modal>
-
-<Modal bind:showModal={showLoginModal}>
-    <div slot="title">
-        <h3>로그인</h3>
-    </div>
-    <button on:click={()=>{
-            window.go.main.App.OpenAuthorization()
-            showLoginModal = false
-        }}>트위치 로그인
-    </button>
-</Modal>
-
 <style>
+    main {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
 
-    :global(body) {
+    :global(html,body) {
         margin: 0;
+        height: 100%;
+    }
+
+    :global(#app) {
+        height: 100%;
+        display: flex;
+    }
+
+    .contents {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        overflow-y: auto;
     }
 
     @import url(https://fonts.googleapis.com/earlyaccess/notosanskr.css);
@@ -120,6 +177,7 @@
     :global(input::-moz-focus-inner), :global(input::-moz-focus-outer) {
         border: 0;
     }
+
 
     /* window BEGIN */
 
@@ -149,6 +207,7 @@
         width: 13px;
         height: 13px;
         margin: 2px;
+        border: none;
     }
 
     .buttons button svg {
@@ -158,45 +217,28 @@
     }
 
     .close {
-        background: #ff5c5c;
-        border: 1px solid #e33e41;
+        background: #fb5e57;
     }
 
     .close:active {
-        background: #c14645;
-        border: 1px solid #b03537;
-    }
-
-    .close:active .closebutton {
-        color: #4e0002;
+        background: #fb5e57;
     }
 
     .minimize {
-        background: #ffbd4c;
-        border: 1px solid #e09e3e;
+        background: #fbbc2d;
     }
 
     .minimize:active {
-        background: #c08e38;
-        border: 1px solid #af7c33;
-    }
-
-    .minimize:active .minimizebutton {
-        color: #5a2607;
+        background: #fbbc2d;
     }
 
     .zoom {
-        background: #00ca56;
-        border: 1px solid #14ae46;
+        background: #28c740;
     }
 
     .zoom:active {
-        background: #029740;
-        border: 1px solid #128435;
+        background: #28c740;
     }
 
-    .zoom:active .zoombutton {
-        color: #003107;
-    }
 
 </style>

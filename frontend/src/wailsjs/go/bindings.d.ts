@@ -5,7 +5,7 @@ export interface go {
 		Greet(arg1:string):Promise<string>
 		IsAuthorized():Promise<boolean>
 		OpenAuthorization():Promise<void>
-		SendChatMessage(arg1:string):Promise<void>
+		SendChatMessage(arg1:string,arg2:string):Promise<void>
     },
   }
 

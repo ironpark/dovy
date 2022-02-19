@@ -89,6 +89,7 @@ func (dov *Dovy) Connect(channelName string) {
 	dov.cm.ConnectOrGet(channelName)
 }
 
-func (dov *Dovy) SendChatMessage(msg string) {
+func (dov *Dovy) SendChatMessage(channel, msg string) {
+	dov.cm.Send(channel, msg)
 	fmt.Println("SendChatMessage", "woowakgood", msg)
 }

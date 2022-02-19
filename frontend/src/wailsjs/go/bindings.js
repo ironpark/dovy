@@ -37,10 +37,11 @@ const go = {
       /**
        * SendChatMessage
        * @param {string} arg1 - Go Type: string
+       * @param {string} arg2 - Go Type: string
        * @returns {Promise<void>} 
        */
-      "SendChatMessage": (arg1) => {
-        return window.go.main.App.SendChatMessage(arg1);
+      "SendChatMessage": (arg1, arg2) => {
+        return window.go.main.App.SendChatMessage(arg1, arg2);
       },
     },
   },

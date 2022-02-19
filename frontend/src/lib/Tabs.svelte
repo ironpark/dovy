@@ -14,7 +14,7 @@
     }
 
     function select(index) {
-        dispatch('select', {
+        dispatch('selectTab', {
             index: index,
         });
     }
@@ -83,6 +83,7 @@
 
     .tabs {
         width: 100%;
+        height: 41px;
         display: flex;
         flex-direction: row;
         background: #cecece;

@@ -20,8 +20,8 @@ func NewApp() *App {
 	}
 }
 
-func (a *App) SendChatMessage(msg string) {
-	a.dovey.SendChatMessage(msg)
+func (a *App) SendChatMessage(channel, msg string) {
+	a.dovey.SendChatMessage(channel, msg)
 }
 
 func (a *App) OpenAuthorization() {

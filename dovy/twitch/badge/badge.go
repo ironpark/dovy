@@ -11,7 +11,7 @@ type Store struct {
 	sync.RWMutex
 }
 
-func New() *Store {
+func NewStore() *Store {
 	return &Store{
 		badges:  map[string]string{},
 		RWMutex: sync.RWMutex{},
