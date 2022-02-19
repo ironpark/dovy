@@ -33,36 +33,6 @@
 </div>
 
 <style>
-    .custom-context-menu ul li:last-child {
-        border-left: 0;
-        border-right: 0;
-        border-top: 0;
-        border-bottom: 0;
-    }
-
-    ul {
-        list-style-type: none;
-        padding: 0;
-        margin: 0;
-    }
-
-    .custom-context-menu ul li {
-        cursor: pointer;
-        min-width: 130px;
-        font-size: 12px;
-        padding: 5px;
-        text-decoration: none;
-        border-bottom: 1px #C5C5C5FF;
-        border-left: 0;
-        border-right: 0;
-        border-top: 0;
-        border-style: solid;
-    }
-
-    .custom-context-menu ul li:hover {
-        background-color: #d7d7d7;
-    }
-
     .custom-context-menu {
         max-width: 240px;
         font-family: 'Noto Sans KR', sans-serif;

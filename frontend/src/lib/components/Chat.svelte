@@ -2,6 +2,8 @@
     import {format} from 'date-fns'
     import VirtualScroll from "svelte-virtual-scroll-list"
     import {afterUpdate, onMount} from "svelte";
+    import Fa from "svelte-fa";
+    import {faReply} from "@fortawesome/free-solid-svg-icons";
 
     export let style = "width:300px;";
     export let showBadges = true;
@@ -87,6 +89,12 @@
                 </span>
                 {@html data.msg_with_emotes}
             </div>
+            <div class="actions">
+                <button>@</button>
+                <button>
+                    <Fa icon={faReply} scale={0.85}/>
+                </button>
+            </div>
         </div>
     {/each}
     <!--    <div bind:this={listElement}></div>-->
@@ -123,13 +131,27 @@
     }
 
     .message-row {
-        min-height: 17px;
+        position:relative;
+        min-height: 18px;
         font-size: 13px;
         overflow-wrap: anywhere;
         word-break: break-all;
         padding: 5px 20px 5px 5px;
     }
-
+    .actions{
+        position:absolute;
+        right: 0;
+        top: 3px;
+        display: none;
+    }
+    .actions button{
+        text-align: center;
+        padding: 4px;
+        margin: 0;
+    }
+    .message-row:hover .actions{
+        display: block;
+    }
     .message-row .name:hover {
         background: #d2d2d2;
     }
