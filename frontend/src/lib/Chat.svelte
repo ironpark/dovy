@@ -102,12 +102,11 @@
     }
 
     .message-row {
-        width: 100%;
         min-height: 17px;
         font-size: 13px;
         overflow-wrap: anywhere;
         word-break: break-all;
-        padding: 5px 20px 5px 5px;
+        margin: 5px 20px 5px 5px;
     }
 
     .message-row .badge {

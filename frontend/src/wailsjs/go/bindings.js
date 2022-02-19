@@ -43,6 +43,14 @@ const go = {
       "SendChatMessage": (arg1, arg2) => {
         return window.go.main.App.SendChatMessage(arg1, arg2);
       },
+      /**
+       * UserList
+       * @param {string} arg1 - Go Type: string
+       * @returns {Promise<Array<string>>}  - Go Type: []string
+       */
+      "UserList": (arg1) => {
+        return window.go.main.App.UserList(arg1);
+      },
     },
   },
 

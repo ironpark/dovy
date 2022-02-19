@@ -10,6 +10,7 @@ package ordered
 import (
 	"constraints"
 	"container/list"
+	"fmt"
 	"sync"
 )
 
@@ -65,6 +66,7 @@ func (om *OrderedMap[K, V]) GetPair(key K) *Pair[K, V] {
 func (om *OrderedMap[K, V]) Set(key K, value V) (V, bool) {
 	om.lock.Lock()
 	defer om.lock.Unlock()
+	fmt.Println("OrderedMap", key, value)
 	if pair, present := om.pairs[key]; present {
 		oldValue := pair.Value
 		pair.Value = value
@@ -121,6 +123,7 @@ func (om *OrderedMap[K, V]) Newest() *Pair[K, V] {
 }
 
 func (om *OrderedMap[K, V]) Keys() (keys []K) {
+
 	om.lock.RLock()
 	defer om.lock.RUnlock()
 	keys = make([]K, om.list.Len())
@@ -129,19 +132,21 @@ func (om *OrderedMap[K, V]) Keys() (keys []K) {
 		keys[i] = element.Value.(*Pair[K, V]).Key
 		element = element.Next()
 	}
+	fmt.Println("Keys", keys)
 	return keys
 }
 
-func (om *OrderedMap[K, V]) Values() (keys []K) {
+func (om *OrderedMap[K, V]) Values() (values []V) {
 	om.lock.RLock()
 	defer om.lock.RUnlock()
-	keys = make([]K, om.list.Len())
+	values = make([]V, om.list.Len())
 	element := om.list.Front()
 	for i := 0; element != nil; i++ {
-		keys[i] = element.Value.(*Pair[K, V]).Key
+		values[i] = element.Value.(*Pair[K, V]).Value
 		element = element.Next()
 	}
-	return keys
+	fmt.Println("Values", values)
+	return values
 }
 
 // Next returns a pointer to the next pair.

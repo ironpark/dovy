@@ -33,6 +33,10 @@ func (a *App) Connect(channelName string) {
 	return
 }
 
+func (a *App) UserList(channelName string) []string {
+	return a.dovey.UserList(channelName)
+}
+
 func (a *App) IsAuthorized() bool {
 	return a.dovey.IsAuthorized()
 }

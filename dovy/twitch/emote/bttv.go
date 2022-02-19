@@ -28,6 +28,10 @@ func (ebttv EmoteBTTV) URL1X() string {
 	return fmt.Sprintf("https://cdn.betterttv.net/emote/%s/1x", ebttv.ID)
 }
 
+func (ebttv EmoteBTTV) GetImgTag() string {
+	return fmt.Sprintf("<img src=\"%s\" class=\"emote\" alt=\"%s\"/>", ebttv.URL1X(), ebttv.GetCode())
+}
+
 func GetGlobalEmotesBTTV() (emotes []Emote, err error) {
 	bEmotes := []EmoteBTTV{}
 	res, err := http.Get("https://api.betterttv.net/3/cached/emotes/global")

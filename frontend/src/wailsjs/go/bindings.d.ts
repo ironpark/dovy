@@ -6,6 +6,7 @@ export interface go {
 		IsAuthorized():Promise<boolean>
 		OpenAuthorization():Promise<void>
 		SendChatMessage(arg1:string,arg2:string):Promise<void>
+		UserList(arg1:string):Promise<Array<string>>
     },
   }
 

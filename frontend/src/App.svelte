@@ -21,15 +21,25 @@
     let selectedChannel = {
         filter: {},
         name: '',
-        itemList: []
+        itemList: [],
+        users: {},
     }
     let tabs = [];
     let tabData = {};
     onMount(async () => {
         showLoginModal = !await window.go.main.App.IsAuthorized()
-        window.runtime.EventsOn("chat.stream", (data) => {
+        window.runtime.EventsOn("stream.chat", async (data) => {
             data.time = Date.parse(data.time)
-            let channel = channelInitIfNotExist(data.channel)
+            let {channel, created} = channelInitIfNotExist(data.channel)
+            if (created) {
+                let userlist = await window.go.main.App.UserList(channel.name);
+                for (let i = 0; i < userlist.length; i++) {
+                    channel.users[userlist[i]] = true;
+                }
+                selectedIndex = tabs.length - 1;
+                selectedChannel = channel;
+            }
+
             channel.itemList[channel.itemList.length] = data;
 
             if (channel.itemList.length > 1000) {
@@ -40,6 +50,20 @@
                 selectedChannel = channel;
             }
         })
+        window.runtime.EventsOn("stream.user-event", (data) => {
+            let {channel} = channelInitIfNotExist(data.channel)
+            if (data.event === "JOIN") {
+                if (channel.users[data.user] === undefined) {
+                    channel.users[data.user] = true
+                }
+            } else {
+                if (channel.users[data.user] === undefined) {
+                    return
+                }
+                delete channel.users[data.user];
+            }
+            console.log(data.channel, data.event, data.user)
+        })
     })
 
     function channelExist(channelName) {
@@ -48,12 +72,13 @@
 
     function channelInitIfNotExist(channelName) {
         if (channels[channelName] !== undefined) {
-            return channels[channelName];
+            return {channel: channels[channelName], created: false}
         }
         let channel = {
             filter: {},
             name: channelName,
-            itemList: []
+            itemList: [],
+            users: {}
         }
         channels[channelName] = channel;
 
@@ -68,13 +93,7 @@
 
         tabs[tabs.length] = channelName;
         tabData[channelName] = tabItem;
-        selectedIndex = tabs.length - 1;
-        selectedChannel = channel
-        return channel
-    }
-
-    function greet() {
-        window.go.main.App.OpenAuthorization()
+        return {channel, created: true}
     }
 
 </script>
@@ -83,19 +102,28 @@
         <h3>채팅 채널 추가</h3>
     </div>
     <input type="text" placeholder="스트리머 아이디" bind:value={channelName}/>
-    <button on:click={()=>{
+    <button on:click={async ()=>{
             if(channelName === "") return;
             if(channelExist(channelName))return;
             channelName = channelName.trim()
-            channelInitIfNotExist(channelName);
-            window.go.main.App.Connect(channelName);
+            let {channel,created} = channelInitIfNotExist(channelName);
+            await window.go.main.App.Connect(channelName);
+            let userlist = await window.go.main.App.UserList(channel.name);
+            if (userlist){
+                for(let i = 0; i < userlist.length; i++) {
+                    channel.users[userlist[i]] = true;
+                }
+            }
+            selectedIndex = tabs.length - 1;
+            selectedChannel = channel
             showModal = false;
         }}> 추가
     </button>
     <button on:click={()=>{
             showModal = false;
             channelName = "";
-    }}>취소</button>
+    }}>취소
+    </button>
 </Modal>
 
 <Modal bind:showModal={showLoginModal}>
@@ -131,15 +159,20 @@
         </div>
     </Tabs>
 
-    <div style="display: flex;height:calc(100vh - 45px);flex-flow: column">
-        <Chat style="flex: 1" bind:this={chatBox1} bind:itemList={ selectedChannel.itemList }/>
-        <input style="" type="text" bind:value={chatMessage} on:keypress={(e)=>{
+    <div style="display: flex;height:calc(100vh - 70px);flex-flow: row">
+        <Chat style="flex:1;height: 100%;" bind:this={chatBox1} bind:itemList={ selectedChannel.itemList }/>
+        <div class="user-list">
+            {#each Object.keys(selectedChannel.users) as user}
+                <div>{user}</div>
+            {/each}
+        </div>
+    </div>
+    <input style="" type="text" bind:value={chatMessage} on:keypress={(e)=>{
             if (e.charCode === 13 && (chatMessage && chatMessage.trim() !== ""))  {
                 window.go.main.App.SendChatMessage(selectedChannel.name,chatMessage)
                 chatMessage = ""
             }
         }}>
-    </div>
 
 </main>
 
@@ -178,6 +211,13 @@
         border: 0;
     }
 
+    .user-list {
+        width: 130px;
+        overflow-y: scroll;
+        font-size: 13px;
+        padding-left: 5px;
+        border-left: solid 1px #999999;
+    }
 
     /* window BEGIN */
 

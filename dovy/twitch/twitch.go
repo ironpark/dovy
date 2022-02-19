@@ -8,6 +8,7 @@ import (
 	"fmt"
 	twitchIrc "github.com/gempir/go-twitch-irc/v3"
 	"github.com/nicklaw5/helix/v2"
+	"log"
 	"net/http"
 	"strings"
 	"sync"
@@ -15,15 +16,16 @@ import (
 )
 
 type ConnectionManager struct {
-	channels     *odered.OrderedMap[string, *Channel]
-	ps           *pubsub.PubSub
-	twitchApi    *helix.Client
-	lock         sync.RWMutex
-	token        string
-	irc          *twitchIrc.Client
-	bttv         *emote.Store
-	callback     func(message Message)
-	globalBadges *badge.Store
+	channels          *odered.OrderedMap[string, *Channel]
+	ps                *pubsub.PubSub
+	twitchApi         *helix.Client
+	lock              sync.RWMutex
+	token             string
+	irc               *twitchIrc.Client
+	bttv              *emote.Store
+	callback          func(message Message)
+	userEventCallback func(channel *Channel, event string, user string)
+	globalBadges      *badge.Store
 }
 
 func NewConnectionManager() (*ConnectionManager, error) {
@@ -96,13 +98,13 @@ func (cm *ConnectionManager) msgParse(id, channelName, message string, user twit
 			continue
 		}
 		// BTTV Global Emotes
-		if emoteUrl := cm.bttv.GetEmote(part); emoteUrl != "" {
-			parts[i] = emote.ImgTag(emoteUrl)
+		if bttvEmote := cm.bttv.GetEmote(part); bttvEmote != nil {
+			parts[i] = bttvEmote.GetImgTag()
 			continue
 		}
 		// BTTV, FFZ Channel Emotes
-		if emoteUrl := channel.emoteStore.GetEmote(part); emoteUrl != "" {
-			parts[i] = emote.ImgTag(emoteUrl)
+		if channelEmote := channel.Emotes.GetEmote(part); channelEmote != nil {
+			parts[i] = channelEmote.GetImgTag()
 		}
 	}
 	parserdMsg = strings.Join(parts, " ")
@@ -122,7 +124,7 @@ func (cm *ConnectionManager) msgParse(id, channelName, message string, user twit
 	for badgeId, versionId := range user.Badges {
 		imgUri := cm.globalBadges.GetBadgeImage(badgeId, versionId)
 		if imgUri == "" {
-			imgUri = channel.badgeStore.GetBadgeImage(badgeId, versionId)
+			imgUri = channel.Badges.GetBadgeImage(badgeId, versionId)
 		}
 		if imgUri == "" {
 			continue
@@ -155,6 +157,20 @@ func (cm *ConnectionManager) Initialize(token string) error {
 	fmt.Println("oauth:" + token)
 	client := twitchIrc.NewClient(res.Data.Users[0].Login, "oauth:"+token)
 	client.OnPrivateMessage(func(iMsg twitchIrc.PrivateMessage) {
+		channel, err := cm.ConnectOrGet(iMsg.Channel)
+		if err != nil {
+			log.Println("ERR", err)
+			return
+		}
+
+		if channel.AddUser(iMsg.User.Name) {
+			fmt.Println(iMsg.User.Name, "JOIN")
+			cm.lock.RLock()
+			if cm.userEventCallback != nil {
+				cm.userEventCallback(channel, "JOIN", iMsg.User.Name)
+			}
+			cm.lock.RUnlock()
+		}
 		msg, err := cm.msgParse(iMsg.ID, iMsg.Channel, iMsg.Message, iMsg.User, iMsg.Emotes, iMsg.Time)
 		if err == nil {
 			cm.lock.RLock()
@@ -164,25 +180,52 @@ func (cm *ConnectionManager) Initialize(token string) error {
 			cm.lock.RUnlock()
 		}
 	})
-	client.OnNamesMessage(func(message twitchIrc.NamesMessage) {
-		fmt.Println("[OnNames]", message.Raw)
+	client.OnNamesMessage(func(iMsg twitchIrc.NamesMessage) {
+		fmt.Println("[OnNames]", iMsg.Raw)
 	})
-	client.OnUserJoinMessage(func(message twitchIrc.UserJoinMessage) {
-		fmt.Println("[UserJoin]", message.Channel, message.User)
+	//Join a channel.
+	client.OnUserJoinMessage(func(iMsg twitchIrc.UserJoinMessage) {
+		channel, err := cm.ConnectOrGet(iMsg.Channel)
+		if err != nil {
+			log.Println("ERR", err)
+			return
+		}
+		fmt.Println(iMsg.User, "JOIN")
+		if channel.AddUser(iMsg.User) {
+			cm.lock.RLock()
+			if cm.userEventCallback != nil {
+				cm.userEventCallback(channel, "JOIN", iMsg.User)
+			}
+			cm.lock.RUnlock()
+		}
 	})
-	client.OnWhisperMessage(func(message twitchIrc.WhisperMessage) {
-		fmt.Println("[Whisper]", message.User, message.Message)
+	//Leave a channel.
+	client.OnUserPartMessage(func(iMsg twitchIrc.UserPartMessage) {
+		channel, err := cm.ConnectOrGet(iMsg.Channel)
+		if err != nil {
+			log.Println("ERR", err)
+			return
+		}
+		if channel.RemoveUser(iMsg.User) {
+			cm.lock.RLock()
+			if cm.userEventCallback != nil {
+				cm.userEventCallback(channel, "LEAVE", iMsg.User)
+			}
+			cm.lock.RUnlock()
+		}
 	})
-	client.OnUserStateMessage(func(message twitchIrc.UserStateMessage) {
-		fmt.Println("[UserState]", message.User.Name, message.Message, message.Raw)
+
+	client.OnWhisperMessage(func(iMsg twitchIrc.WhisperMessage) {
+		fmt.Println("[Whisper]", iMsg.User, iMsg.Message)
+	})
+	client.OnUserStateMessage(func(iMsg twitchIrc.UserStateMessage) {
+		fmt.Println("[UserState]", iMsg.User.Name, iMsg.Message, iMsg.Raw)
 	})
 	client.OnUserNoticeMessage(func(iMsg twitchIrc.UserNoticeMessage) {
 		fmt.Println("[UserNotice]", iMsg.User.Name, iMsg.Message, iMsg.Raw)
 		cm.msgParse(iMsg.ID, iMsg.Channel, iMsg.Message, iMsg.User, iMsg.Emotes, iMsg.Time)
 	})
-	client.OnUserPartMessage(func(message twitchIrc.UserPartMessage) {
-		fmt.Println("[OnUserPartMessage]", message.Raw)
-	})
+
 	client.OnUnsetMessage(func(message twitchIrc.RawMessage) {
 		fmt.Println("[OnUnsetMessage]", message.Raw)
 	})
@@ -207,21 +250,10 @@ func (cm *ConnectionManager) OnMessage(callback func(message Message)) {
 	cm.lock.Unlock()
 }
 
-func (cm *ConnectionManager) getChannelIdFromId(loginId string) (string, error) {
-	users, err := cm.twitchApi.GetUsers(&helix.UsersParams{
-		IDs:    nil,
-		Logins: []string{loginId},
-	})
-	if err != nil {
-		return "", err
-	}
-	if users.Error != "" {
-		return "", fmt.Errorf(users.ErrorMessage)
-	}
-	if len(users.Data.Users) == 0 {
-		return "", fmt.Errorf("not exists")
-	}
-	return users.Data.Users[0].ID, nil
+func (cm *ConnectionManager) OnUserEvent(callback func(channel *Channel, event string, user string)) {
+	cm.lock.Lock()
+	cm.userEventCallback = callback
+	cm.lock.Unlock()
 }
 
 func (cm *ConnectionManager) ConnectOrGet(channelName string) (*Channel, error) {
@@ -229,43 +261,11 @@ func (cm *ConnectionManager) ConnectOrGet(channelName string) (*Channel, error) 
 	if ok {
 		return v, nil
 	}
-	channelId, err := cm.getChannelIdFromId(channelName)
+	channel, err := NewChannel(cm.twitchApi, channelName)
 	if err != nil {
-		fmt.Println("ERR!", err)
 		return nil, err
 	}
 
-	channel := &Channel{
-		RWMutex:    sync.RWMutex{},
-		streamer:   channelName,
-		channelId:  channelId,
-		viewers:    0,
-		users:      odered.NewSet[string](),
-		emoteStore: emote.NewStore(),
-		badgeStore: badge.NewStore(),
-	}
-	badges, err := cm.twitchApi.GetChannelChatBadges(
-		&helix.GetChatBadgeParams{
-			BroadcasterID: channelId,
-		})
-	if err != nil {
-		fmt.Println("ERR!", err)
-		return nil, err
-	}
-
-	bttvChannelEmotes, err := emote.GetChannelEmotesBTTV(channelId)
-	if err != nil {
-		fmt.Println("ERR!", err)
-		return nil, err
-	}
-	ffzChannelEmotes, err := emote.GetChannelEmotesFFZ(channelId)
-	if err != nil {
-		fmt.Println("ERR!", err)
-		return nil, err
-	}
-	channel.emoteStore.SetEmotes(bttvChannelEmotes)
-	channel.emoteStore.SetEmotes(ffzChannelEmotes)
-	channel.badgeStore.SetBadges(badges.Data.Badges)
 	cm.channels.Set(channelName, channel)
 	cm.irc.Join(channelName)
 	return channel, nil

@@ -30,6 +30,10 @@ func (efz EmoteFFZ) URL1X() string {
 	return efz.Images.OneX
 }
 
+func (efz EmoteFFZ) GetImgTag() string {
+	return fmt.Sprintf("<img src=\"%s\" class=\"emote\" alt=\"%s\"/>", efz.URL1X(), efz.GetCode())
+}
+
 func GetChannelEmotesFFZ(channelId string) (emotes []Emote, err error) {
 	fEmotes := []EmoteFFZ{}
 	fmt.Println("GetChannelEmotesFFZ", fmt.Sprintf("https://api.betterttv.net/3/cached/frankerfacez/users/twitch/%s", channelId))

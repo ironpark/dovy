@@ -65,7 +65,15 @@ func (dov *Dovy) SetAppContext(ctx context.Context) {
 	}
 	dov.appCtx = ctx
 	dov.cm.OnMessage(func(message twitch.Message) {
-		runtime.EventsEmit(ctx, "chat.stream", message)
+		runtime.EventsEmit(ctx, "stream.chat", message)
+	})
+	dov.cm.OnUserEvent(func(channel *twitch.Channel, event string, user string) {
+		fmt.Println(channel.ChannelId(), event, user)
+		runtime.EventsEmit(ctx, "stream.user-event", map[string]interface{}{
+			"channel": channel.StreamerId(),
+			"event":   event,
+			"user":    user,
+		})
 	})
 	return
 }
@@ -83,6 +91,14 @@ func (dov Dovy) OpenAuthorization() {
 	case "windows":
 		exec.Command("start", "/max", authUrl).Run()
 	}
+}
+
+func (dov *Dovy) UserList(channelName string) []string {
+	channel, err := dov.cm.ConnectOrGet(channelName)
+	if err != nil {
+		return []string{}
+	}
+	return channel.UserList()
 }
 
 func (dov *Dovy) Connect(channelName string) {
