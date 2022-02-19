@@ -160,7 +160,6 @@ func (cm *ConnectionManager) Initialize(token string) error {
 		return err
 	}
 	cm.globalBadges.SetBadges(globalBadge.Data.Badges)
-	fmt.Println("oauth:" + token)
 	client := twitchIrc.NewClient(res.Data.Users[0].Login, "oauth:"+token)
 	client.OnPrivateMessage(func(iMsg twitchIrc.PrivateMessage) {
 		channel, err := cm.ConnectOrGet(iMsg.Channel)
@@ -170,7 +169,6 @@ func (cm *ConnectionManager) Initialize(token string) error {
 		}
 
 		if channel.AddUser(iMsg.User.Name) {
-			fmt.Println(iMsg.User.Name, "JOIN")
 			cm.lock.RLock()
 			if cm.userEventCallback != nil {
 				cm.userEventCallback(channel, "JOIN", iMsg.User.Name)

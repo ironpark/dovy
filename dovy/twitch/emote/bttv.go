@@ -48,16 +48,13 @@ func GetGlobalEmotesBTTV() (emotes []Emote, err error) {
 
 func GetChannelEmotesBTTV(channelId string) (emotes []Emote, err error) {
 	var bEmotes channelEmoteResp
-	fmt.Println("GetChannelEmotesBTTV", fmt.Sprintf("https://api.betterttv.net/3/cached/users/twitch/%s", channelId))
 	res, err := http.Get(fmt.Sprintf("https://api.betterttv.net/3/cached/users/twitch/%s", channelId))
 	if err != nil {
-		fmt.Println("GetChannelEmotesBTTV", err)
 		return nil, err
 	}
 	err = json.NewDecoder(res.Body).Decode(&bEmotes)
 	res.Body.Close()
 	if err != nil {
-		fmt.Println("GetChannelEmotesBTTV", err)
 		return nil, err
 	}
 	for _, emote := range bEmotes.ChannelEmotes {

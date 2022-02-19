@@ -10,7 +10,6 @@ package ordered
 import (
 	"constraints"
 	"container/list"
-	"fmt"
 	"sync"
 )
 
@@ -131,7 +130,6 @@ func (om *OrderedMap[K, V]) Keys() (keys []K) {
 		keys[i] = element.Value.(*Pair[K, V]).Key
 		element = element.Next()
 	}
-	fmt.Println("Keys", keys)
 	return keys
 }
 
@@ -144,7 +142,6 @@ func (om *OrderedMap[K, V]) Values() (values []V) {
 		values[i] = element.Value.(*Pair[K, V]).Value
 		element = element.Next()
 	}
-	fmt.Println("Values", values)
 	return values
 }
 

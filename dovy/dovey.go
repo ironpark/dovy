@@ -3,7 +3,6 @@ package dovy
 import (
 	"context"
 	"dovey/dovy/twitch"
-	"fmt"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"os/exec"
 	gort "runtime"
@@ -83,7 +82,6 @@ func (dov *Dovy) IsAuthorized() bool {
 
 func (dov Dovy) OpenAuthorization() {
 	authUrl := twitch.GetAuthorizationURL(dov.scope, true)
-	fmt.Println(authUrl)
 	switch gort.GOOS {
 	case "darwin":
 		exec.Command("open", authUrl).Run()
@@ -106,5 +104,4 @@ func (dov *Dovy) Connect(channelName string) {
 
 func (dov *Dovy) SendChatMessage(channel, msg string) {
 	dov.cm.Send(channel, msg)
-	fmt.Println("SendChatMessage", "woowakgood", msg)
 }

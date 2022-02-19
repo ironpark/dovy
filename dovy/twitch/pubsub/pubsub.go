@@ -52,6 +52,5 @@ func (ps *PubSub) ReadLoop() error {
 
 func (ps *PubSub) Listen(token, nonce string, topics ...string) {
 	c := listen(token, nonce, topics...)
-	fmt.Println(string(c))
 	ps.conn.WriteMessage(websocket.TextMessage, c)
 }
